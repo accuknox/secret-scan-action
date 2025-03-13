@@ -1,13 +1,13 @@
-name: Accuknox Secret Scan
-description: Scan secrets in your repository and send the results to Accuknox.
+name: AccuKnox Secret Scan
+description: Scan secrets in your repository and send the results to AccuKnox.
 
 inputs:
   token:
-    description: 'The token for authenticating with the CSPM panel.'
+    description: 'The token for authenticating with the control plane.'
     required: true
 
   tenant_id:
-    description: "The ID of the tenant associated with the CSPM panel."
+    description: "The ID of the tenant associated with the control plane."
     required: true
 
   label:
@@ -15,7 +15,7 @@ inputs:
     required: true
 
   endpoint:
-    description: "The URL of the CSPM panel to push the scan results to."
+    description: "Control Plane URL to push the scan results."
     required: true
     default: "cspm.demo.accuknox.com"
 
@@ -29,7 +29,7 @@ inputs:
     default: "false"
 
   branch:
-    description: "The branch to scan. Use 'all-branches' to scan all branches"
+    description: "Branch to scan. Use 'all-branches' to scan all branches"
     required: false
 
   exclude-paths:
@@ -37,13 +37,13 @@ inputs:
     required: false
 
   args:
-    description: "Additional arguments to pass to trufflehog."
+    description: "Additional arguments to pass."
     required: false
 
 runs:
   using: "composite"
   steps:
-    - name: Run TruffleHog
+    - name: Run Secrets Scan engine
       run: |
         RESULTS_FLAG=""
         if [[ -n "${{ inputs.results }}" ]]; then
@@ -79,11 +79,11 @@ runs:
         fi
 
         docker run --rm -v "$PWD:/pwd" trufflesecurity/trufflehog:3.88.1 git file:///pwd \
-        --json --no-update $BRANCH_FLAG $RESULTS_FLAG $FAIL_FLAG $EXCLUDE_FLAG $EXTRA_ARGS > trufflehog-results.json || exit_code=$?
+            --json --no-update $BRANCH_FLAG $RESULTS_FLAG $FAIL_FLAG $EXCLUDE_FLAG $EXTRA_ARGS > trufflehog-results.json || exit_code=$?
         echo "TRUFFLEHOG_EXIT_CODE=${exit_code:-0}" >> $GITHUB_ENV
       shell: bash
 
-    - name: Push report to CSPM panel
+    - name: Push report to Control Plane
       run: |
         if [[ ! -s trufflehog-results.json ]]; then
           echo "No secrets found. Skipping API upload."
@@ -97,7 +97,7 @@ runs:
 
             echo "Response: $RESPONSE"
             if [[ "$RESPONSE" != *"File received successfully"* ]]; then
-              echo "Error: Failed to push report to CSPM panel"
+              echo "Error: Failed to push report to control plane"
               exit 1
             fi
       shell: bash
@@ -105,7 +105,7 @@ runs:
     - name: Quality Check with exit_code
       if: env.TRUFFLEHOG_EXIT_CODE == '183'
       run: |
-        echo "TruffleHog found credentials. Failing the job."
+        echo "Scan Engine found credentials. Failing the job."
         exit 1
       shell: bash
 
