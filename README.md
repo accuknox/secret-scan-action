@@ -29,7 +29,6 @@ This GitHub Action scans your repository for secrets and uploads the result to y
 | `results` | Specifies which type(s) of results to output: `verified`, `unknown`, `unverified`, `filtered_unverified`. Defaults to all types. | Optional | `all` |
 | `fail` | Fail the pipeline if secrets are found. | Optional | `false` |
 
-Let me know if you need any modifications!
 ---
 
 ### List of available flags
