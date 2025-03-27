@@ -16,11 +16,18 @@ This GitHub Action scans your repository for secrets and uploads the result to y
 | `tenant_id` | The ID of the tenant. | Required | `None` |
 | `label` | The label created in AccuKnox SaaS. | Required | `None` |
 | `endpoint` | The URL of the CSPM panel to push the scan results to. | Required | `cspm.demo.accuknox.com` |
-| `results` | Specifies which type(s) of results to output: `verified`, `unknown`, `unverified`, `filtered_unverified`. Defaults to all types. | Optional | `all` |
-| `fail` | Fail the pipeline if secrets are found. | Optional | `false` |
-| `branch` | Branch to scan. Use name of the branch or `all-branches` | Optional | `HEAD branch` |
+| `secret_scan_type` | Source type for scanning (`git`, `huggingface`, `s3`). | Required | `git` |
+| `branch` | Branch to scan. Use name of the branch or `all-branches`. | Optional | `HEAD branch` |
 | `exclude-paths` | Paths to exclude from the scan. | Optional | `None` |
 | `args` | Additional arguments to pass to the CLI. | Optional | `None` |
+| `dataset` | Dataset name (required if `secret_scan_type` is `huggingface`). | Optional | `None` |
+| `huggingface_token` | Hugging Face token (required if `secret_scan_type` is `huggingface`). | Optional | `None` |
+| `bucket_name` | S3 bucket name (required if `secret_scan_type` is `s3`). | Optional | `None` |
+| `aws_access_key_id` | AWS Access Key ID (required if `secret_scan_type` is `s3`). | Optional | `None` |
+| `aws_secret_access_key` | AWS Secret Access Key (required if `secret_scan_type` is `s3`). | Optional | `None` |
+| `use_extended_ruleset` | Enable extended regex rules for detecting sensitive data. | Optional | `false` |
+| `results` | Specifies which type(s) of results to output: `verified`, `unknown`, `unverified`, `filtered_unverified`. Defaults to all types. | Optional | `all` |
+| `fail` | Fail the pipeline if secrets are found. | Optional | `false` |
 
 ---
 

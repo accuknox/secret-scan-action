@@ -1,0 +1,58 @@
+detectors:
+  - name: email-detector
+    keywords:
+      - email
+      - mail
+      - contact
+      - user
+    regex:
+      email-pattern: "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
+  
+  - name: phone-detector
+    keywords:
+      - phone
+      - number
+      - contact
+      - mobile
+      - tel
+    regex:
+      phone-pattern: "(?:\\d-)?\\(\\d{3}\\) \\d{3}-\\d{4}|\\d-\\d{3}-\\d{3}-\\d{4}"
+
+  - name: patient-id-detector
+    keywords:
+      - id
+      - patient id
+      - patient number
+      - identifier
+    regex:
+      patient-id-pattern: "P\\d{3}"
+
+  - name: health-plan-detector
+    keywords:
+      - health plan
+      - insurance
+      - policy
+      - coverage
+      - health insurance
+    regex:
+      health-plan-pattern: "HP-\\d{5}"
+
+  - name: diagnosis-detector
+    keywords:
+      - diagnosis
+      - condition
+      - disease
+      - medical condition
+      - health condition
+    regex:
+      diagnosis-pattern: "(Hypertension|Diabetes\\s+Type\\s+\\d|Asthma|[A-Z][a-z]+\\s*[A-Za-z\\s]*)"
+
+  - name: medical-record-detector
+    keywords:
+      - medical record
+      - record number
+      - chart
+      - patient record
+      - medical file
+    regex:
+      medical-record-pattern: "MRN-\\d{4}"
