@@ -73,7 +73,7 @@ inputs:
   extended_ruleset_path:
     description: "Path or URL for the extended ruleset"
     required: false
-    default: "https://raw.githubusercontent.com/safeer-accuknox/secret-scan-action-test/refs/heads/main/config.yml"
+    default: "https://raw.githubusercontent.com/accuknox/secret-scan-action/refs/heads/main/config.yml"
 
   args:
     description: "Additional arguments to pass."
