@@ -79,6 +79,11 @@ inputs:
     description: "Additional arguments to pass."
     required: false
 
+  upload_artifact:
+    description: 'Upload the scan results as a GitHub artifact'
+    required: true
+    default: 'true'
+
 runs:
   using: "composite"
   steps:
@@ -166,14 +171,14 @@ runs:
           BUCKET_FLAG="--bucket=${{ inputs.bucket_name }}"
         fi
 
-        docker run --rm -e AWS_ACCESS_KEY_ID="${{ inputs.aws_access_key_id }}" -e AWS_SECRET_ACCESS_KEY="${{ inputs.aws_secret_access_key }}" -e HUGGINGFACE_TOKEN="${{ inputs.huggingface_token }}" -v $PWD/extended_ruleset_path.yml:/extended_ruleset_path.yml -v "$PWD:/pwd" trufflesecurity/trufflehog:3.88.1 $SECRET_SCAN_TYPE --json --no-update $BUCKET_FLAG $DATASET_FLAG $BRANCH_FLAG $RESULTS_FLAG $CONFIG_OPTION $FAIL_FLAG $EXCLUDE_FLAG $EXTRA_ARGS > trufflehog-results.json || exit_code=$?
+        docker run --rm -e AWS_ACCESS_KEY_ID="${{ inputs.aws_access_key_id }}" -e AWS_SECRET_ACCESS_KEY="${{ inputs.aws_secret_access_key }}" -e HUGGINGFACE_TOKEN="${{ inputs.huggingface_token }}" -v $PWD/extended_ruleset_path.yml:/extended_ruleset_path.yml -v "$PWD:/pwd" trufflesecurity/trufflehog:3.88.1 $SECRET_SCAN_TYPE --json --no-update $BUCKET_FLAG $DATASET_FLAG $BRANCH_FLAG $RESULTS_FLAG $CONFIG_OPTION $FAIL_FLAG $EXCLUDE_FLAG $EXTRA_ARGS > accuknox-secret-scan-results.json || exit_code=$?
         
         echo "TRUFFLEHOG_EXIT_CODE=${exit_code:-0}" >> $GITHUB_ENV
       shell: bash
 
     - name: Push report to Control Plane
       run: |
-        if [[ ! -s trufflehog-results.json ]]; then
+        if [[ ! -s accuknox-secret-scan-results.json ]]; then
           echo "No secrets found. Skipping API upload."
           exit 0
         fi
@@ -181,7 +186,7 @@ runs:
         RESPONSE=$(curl --location 'https://${{ inputs.endpoint }}/api/v1/artifact/?tenant_id=${{ inputs.tenant_id }}&data_type=TruffleHog&save_to_s3=true&label_id=${{ inputs.label }}' \
             --header 'Tenant-Id: ${{ inputs.tenant_id }}' \
             --header 'Authorization: Bearer ${{ inputs.token }}' \
-            --form 'file=@./trufflehog-results.json')
+            --form 'file=@./accuknox-secret-scan-results.json')
 
             echo "Response: $RESPONSE"
             if [[ "$RESPONSE" != *"File received successfully"* ]]; then
@@ -189,6 +194,14 @@ runs:
               exit 1
             fi
       shell: bash
+
+    - name: Upload Scan Results as Artifact
+      if: inputs.upload_artifact == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: scan-results-${{ github.sha }}
+        path: accuknox-secret-scan-results.json
+        if-no-files-found: ignore
 
     - name: Quality Check with exit_code
       if: env.TRUFFLEHOG_EXIT_CODE == '183'

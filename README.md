@@ -28,6 +28,7 @@ This GitHub Action scans your repository for secrets and uploads the result to y
 | `use_extended_ruleset` | Enable extended regex rules for detecting sensitive data. | Optional | `false` |
 | `results` | Specifies which type(s) of results to output: `verified`, `unknown`, `unverified`, `filtered_unverified`. Defaults to all types. | Optional | `all` |
 | `fail` | Fail the pipeline if secrets are found. | Optional | `false` |
+| `upload_artifact` | Upload scan results as artifact	 | Optional | `true` |
 
 ---
 
