@@ -72,17 +72,71 @@ jobs:
       - name: Run Secret Scan
         uses: accuknox/secret-scan-action@v0.0.1
         with:
-          branch: "main"                             # Branch to scan
-          results: ""                                # Types of results: verified, unknown, unverified, filtered_unverified
-          exclude_paths: "tests/,docs/"             # Paths to exclude
-          additional_arguments: ""                   # Extra arguments for the scanner
-          base_command: ""                           # Override default Docker command
-          output_format: json                        # Output format
-          output_file_path: "./secret_results.json" # Output file path
-          soft_fail: true                            # Continue even if secrets found
+          branch: "main"                              # Branch to scan
+          results: ""                                 # Types of results: verified, unknown, unverified, filtered_unverified
+          exclude_paths: "tests/,docs/"               # Paths to exclude
+          additional_arguments: ""                    # Extra arguments for the scanner
+          base_command: ""                            # Override default Docker command
+          output_format: json                         # Output format
+          output_file_path: "./secret_results.json"   # Output file path
           token: ${{ secrets.ACCUKNOX_TOKEN }}
           endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
           label: ${{ secrets.ACCUKNOX_LABEL }}
-
+          soft_fail: true
 ```
-111
+
+## ⚙️ Configuration Options (Inputs)
+
+| Input                  | Description                                                   | Optional/Required | Default |
+|------------------------|---------------------------------------------------------------|------------------|---------|
+| `branch`               | Git branch to scan. Use `all-branches` to scan all branches   | Optional         | Latest commit SHA |
+| `results`              | Result types to include: `verified`, `unknown`, `unverified`, `filtered_unverified` | Optional | All types included |
+| `exclude_paths`        | Comma-separated list of paths to exclude from scanning        | Optional         | "" |
+| `additional_arguments` | Extra arguments to pass to the secret scanning tool           | Optional         | "" |
+| `base_command`         | Override the default command (Docker/local CLI)               | Optional         | Docker-based |
+| `token`                | API token for AccuKnox SaaS                                    | Required         | — |
+| `endpoint`             | AccuKnox API endpoint                                          | Optional         | cspm.demo.accuknox.com |
+| `label`                | Label used in AccuKnox SaaS to organize results               | Required         | — |
+| `output_format`        | Format of results (`json`, `cli`, etc.)                       | Optional         | cli |
+| `output_file_path`     | Path to write output results                                   | Optional         | — |
+| `soft_fail`            | Prevent CI from failing on secret detection                   | Optional         | false |
+
+---
+
+## 🔍 How It Works
+
+1. **Developer pushes code** → Workflow triggers.  
+2. **Secret Scanner runs** → Docker executes the scan or local CLI if overridden.  
+3. **Secrets detected** → The tool generates a JSON results file.  
+4. **Upload findings** → Results are sent to AccuKnox using the provided token & label.  
+5. **Review findings** → Dashboard → Issues → Findings → Filter by *Secret Findings*.  
+6. **Pipeline decision** → If `soft_fail: false`, the pipeline fails on detected secrets.  
+
+---
+
+## 🛠️ Troubleshooting & Best Practices
+
+| Issue                                | Cause                                     | Solution |
+|--------------------------------------|------------------------------------------|----------|
+| `Missing required input: token`       | GitHub secret not set                     | Add `ACCUKNOX_TOKEN` |
+| `Failed to connect to endpoint`      | Incorrect API URL or network issue       | Verify endpoint URL |
+| No scan results in AccuKnox Console  | Missing label or invalid credentials      | Verify label and token values |
+| Workflow fails even with minor secrets | `soft_fail` not set                        | Set `soft_fail: true` to continue despite findings |
+| Empty scan report                     | Wrong directory or branch scanned        | Verify `exclude_paths` and `branch` inputs |
+
+---
+
+## 📖 Support & Documentation
+
+📚 Docs: [AccuKnox Documentation](https://accuknox.com)  
+
+📧 Support: support@accuknox.com  
+
+---
+
+## 🏁 Conclusion
+
+The **AccuKnox Secret Scan GitHub Action** ensures hardcoded secrets are detected early, preventing leaks and enforcing security best practices.  
+
+🔐 **Shift Left with AccuKnox – Catch Secrets Before They Leak!** 🚀
+
