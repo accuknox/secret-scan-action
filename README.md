@@ -80,7 +80,9 @@ jobs:
           output_format: json                        # Output format
           output_file_path: "./secret_results.json" # Output file path
           soft_fail: true                            # Continue even if secrets found
-```
           token: ${{ secrets.ACCUKNOX_TOKEN }}
           endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
           label: ${{ secrets.ACCUKNOX_LABEL }}
+
+```
+111
