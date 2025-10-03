@@ -3,7 +3,7 @@ description: "Run AccuKnox Secret Security scan on a repository"
 
 inputs:
   token:
-    description: "CSPM API token"
+    description: "CSPM token"
     required: true
   endpoint:
     description: "CSPM Console endpoint URL"
@@ -30,7 +30,7 @@ inputs:
   soft_fail:
     description: "Do not return an error code if there are failed checks"
     required: false
-    default: true
+    default: false
   base_command:
     description: "Override the base command used to run the scan (optional)"
     required: false
