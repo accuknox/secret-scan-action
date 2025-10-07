@@ -1,6 +1,10 @@
 name: "AccuKnox Secret Scanner"
 description: "Run AccuKnox Secret Security scan on a repository"
 
+branding: 
+  icon: "shield" 
+  color: "purple"
+
 inputs:
   token:
     description: "CSPM token"
