@@ -79,9 +79,9 @@ jobs:
           base_command: ""                            # Override default Docker command
           output_format: json                         # Output format
           output_file_path: "./secret_results.json"   # Output file path
-          token: ${{ secrets.ACCUKNOX_TOKEN }}
-          endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
-          label: ${{ secrets.ACCUKNOX_LABEL }}
+          accuknox_token: ${{ secrets.ACCUKNOX_TOKEN }}
+          accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
+          accuknox_label: ${{ secrets.ACCUKNOX_LABEL }}
           soft_fail: true
 ```
 
@@ -94,9 +94,9 @@ jobs:
 | `exclude_paths`        | Comma-separated list of paths to exclude from scanning        | Optional         | "" |
 | `additional_arguments` | Extra arguments to pass to the secret scanning tool           | Optional         | "" |
 | `base_command`         | Override the default command (Docker/local CLI)               | Optional         | Docker-based |
-| `token`                | API token for AccuKnox SaaS                                    | Required         | — |
-| `endpoint`             | AccuKnox API endpoint                                          | Optional         | cspm.demo.accuknox.com |
-| `label`                | Label used in AccuKnox SaaS to organize results               | Required         | — |
+| `accuknox_token`                | API token for AccuKnox SaaS                                    | Required         | — |
+| `accuknox_endpoint`             | AccuKnox API endpoint                                          | Optional         | cspm.demo.accuknox.com |
+| `accuknox_label`                | Label used in AccuKnox SaaS to organize results               | Required         | — |
 | `output_format`        | Format of results (`json`, `cli`, etc.)                       | Optional         | cli |
 | `output_file_path`     | Path to write output results                                   | Optional         | — |
 | `soft_fail`            | Prevent CI from failing on secret detection                   | Optional         | false |
