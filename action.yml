@@ -1,14 +1,18 @@
 name: "AccuKnox Secret Scanner"
 description: "Run AccuKnox Secret Security scan on a repository"
 
+branding: 
+  icon: "shield" 
+  color: "purple"
+
 inputs:
-  token:
+  accuknox_token:
     description: "CSPM token"
     required: true
-  endpoint:
+  accuknox_endpoint:
     description: "CSPM Console endpoint URL"
     required: true
-  label:
+  accuknox_label:
     description: "Label for scan results in AccuKnox Console"
     required: true
   results:
@@ -42,9 +46,9 @@ runs:
     - name: Run AccuKnox Secret Scan
       shell: bash
       env:
-        ACCUKNOX_TOKEN: ${{ inputs.token }}
-        ACCUKNOX_LABEL: ${{ inputs.label }}
-        ACCUKNOX_ENDPOINT: ${{ inputs.endpoint }}
+        ACCUKNOX_TOKEN: ${{ inputs.accuknox_token }}
+        ACCUKNOX_LABEL: ${{ inputs.accuknox_label }}
+        ACCUKNOX_ENDPOINT: ${{ inputs.accuknox_endpoint }}
         RESULTS: ${{ inputs.results }}
         BRANCH: ${{ inputs.branch }}
         EXCLUDE_PATHS: ${{ inputs.exclude_paths }}
@@ -87,6 +91,3 @@ runs:
         echo "./accuknox-aspm-scanner scan $SOFT_FAIL_ARG secret --command \"$BASE_CMD $ARGS\" --container-mode"
         ./accuknox-aspm-scanner scan $SOFT_FAIL_ARG secret --command "$BASE_CMD $ARGS" --container-mode
       
-branding:
-  icon: "lock"
-  color: "purple"
