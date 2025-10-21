@@ -1,4 +1,4 @@
-name: "AccuKnox Secret Scanner"
+name: "AccuKnox Secret Scan"
 description: "Run AccuKnox Secret Security scan on a repository"
 
 branding: 
