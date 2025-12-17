@@ -70,7 +70,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run Secret Scan
-        uses: accuknox/secret-scan-action@v0.0.1
+        uses: accuknox/secret-scan-action@latest
         with:
           branch: "main"                              # Branch to scan
           results: ""                                 # Types of results: verified, unknown, unverified, filtered_unverified
