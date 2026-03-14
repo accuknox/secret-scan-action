@@ -34,11 +34,15 @@ inputs:
   soft_fail:
     description: "Do not return an error code if there are failed checks"
     required: false
-    default: false
+    default: "false"
   base_command:
     description: "Override the base command used to run the scan (optional)"
     required: false
     default: ""
+  upload_results:
+    description: "Upload scan results as GitHub artifact"
+    required: false
+    default: "true"
 
 runs:
   using: "composite"
@@ -55,6 +59,7 @@ runs:
         ADDITIONAL_ARGUMENTS: ${{ inputs.additional_arguments }}
         SOFT_FAIL: ${{ inputs.soft_fail }}
         BASE_COMMAND: ${{ inputs.base_command }}
+        UPLOAD_RESULTS: ${{ inputs.upload_results }}
       run: |
         set -e
 
@@ -64,8 +69,11 @@ runs:
         fi
 
         echo "Downloading AccuKnox ASPM Scanner..."
-        curl -L https://github.com/accuknox/aspm-scanner-cli/releases/download/v0.13.4/accuknox-aspm-scanner -o accuknox-aspm-scanner
+        curl -L https://github.com/accuknox/aspm-scanner-cli/releases/download/v0.14.1/accuknox-aspm-scanner -o accuknox-aspm-scanner
         chmod +x accuknox-aspm-scanner
+
+        touch ./results.json
+        chmod 666 ./results.json
 
         # Soft fail argument
         SOFT_FAIL="${SOFT_FAIL//[$'\t\r\n ']}"
@@ -88,6 +96,17 @@ runs:
         [ -n "$ADDITIONAL_ARGUMENTS" ] && ARGS="$ARGS $ADDITIONAL_ARGUMENTS"
 
         echo "Running AccuKnox secret scan..."
-        echo "./accuknox-aspm-scanner scan $SOFT_FAIL_ARG secret --command \"$BASE_CMD $ARGS\" --container-mode"
-        ./accuknox-aspm-scanner scan $SOFT_FAIL_ARG secret --command "$BASE_CMD $ARGS" --container-mode
+        echo "./accuknox-aspm-scanner scan --keep-results $SOFT_FAIL_ARG secret --command \"$BASE_CMD $ARGS\" --container-mode"
+        ./accuknox-aspm-scanner scan --keep-results $SOFT_FAIL_ARG secret --command "$BASE_CMD $ARGS" --container-mode
+
+        cp results.json results-secret.json
+
+    - name: Upload secret scan artifact
+      if: ${{ inputs.upload_results == 'true' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: secret-scan-results
+        path: results-secret.json
+        if-no-files-found: error
+        retention-days: 30
       
