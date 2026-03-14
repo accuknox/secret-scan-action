@@ -77,8 +77,7 @@ jobs:
           exclude_paths: "tests/,docs/"               # Paths to exclude
           additional_arguments: ""                    # Extra arguments for the scanner
           base_command: ""                            # Override default Docker command
-          output_format: json                         # Output format
-          output_file_path: "./secret_results.json"   # Output file path
+          upload_results: true                        # Upload results to GitHub artifact
           accuknox_token: ${{ secrets.ACCUKNOX_TOKEN }}
           accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
           accuknox_label: ${{ secrets.ACCUKNOX_LABEL }}
@@ -97,9 +96,8 @@ jobs:
 | `accuknox_token`                | API token for AccuKnox SaaS                                    | Required         | — |
 | `accuknox_endpoint`             | AccuKnox API endpoint                                          | Optional         | cspm.demo.accuknox.com |
 | `accuknox_label`                | Label used in AccuKnox SaaS to organize results               | Required         | — |
-| `output_format`        | Format of results (`json`, `cli`, etc.)                       | Optional         | cli |
-| `output_file_path`     | Path to write output results                                   | Optional         | — |
 | `soft_fail`            | Prevent CI from failing on secret detection                   | Optional         | false |
+| `upload_results`       | Upload scan results as GitHub artifact                        | Optional         | true |
 
 ---
 
@@ -108,9 +106,10 @@ jobs:
 1. **Developer pushes code** → Workflow triggers.  
 2. **Secret Scanner runs** → Docker executes the scan or local CLI if overridden.  
 3. **Secrets detected** → The tool generates a JSON results file.  
-4. **Upload findings** → Results are sent to AccuKnox using the provided token & label.  
-5. **Review findings** → Dashboard → Issues → Findings → Filter by *Secret Findings*.  
-6. **Pipeline decision** → If `soft_fail: false`, the pipeline fails on detected secrets.  
+4. **Artifact upload** → If `upload_results: true`, the results file is uploaded as a GitHub artifact.  
+5. **Upload findings** → Results are sent to AccuKnox using the provided token & label.  
+6. **Review findings** → Dashboard → Issues → Findings → Filter by *Secret Findings*.  
+7. **Pipeline decision** → If `soft_fail: false`, the pipeline fails on detected secrets.  
 
 ---
 
@@ -139,4 +138,3 @@ jobs:
 The **AccuKnox Secret Scan GitHub Action** ensures hardcoded secrets are detected early, preventing leaks and enforcing security best practices.  
 
 🔐 **Shift Left with AccuKnox – Catch Secrets Before They Leak!** 🚀
-
