@@ -72,8 +72,8 @@ runs:
         curl -L https://github.com/accuknox/aspm-scanner-cli/releases/download/v0.14.1/accuknox-aspm-scanner -o accuknox-aspm-scanner
         chmod +x accuknox-aspm-scanner
 
-        touch ./results.json
-        chmod 666 ./results.json
+        touch ./results.jsonl
+        chmod 666 ./results.jsonl
 
         # Soft fail argument
         SOFT_FAIL="${SOFT_FAIL//[$'\t\r\n ']}"
@@ -99,14 +99,14 @@ runs:
         echo "./accuknox-aspm-scanner scan --keep-results $SOFT_FAIL_ARG secret --command \"$BASE_CMD $ARGS\" --container-mode"
         ./accuknox-aspm-scanner scan --keep-results $SOFT_FAIL_ARG secret --command "$BASE_CMD $ARGS" --container-mode
 
-        cp results.json results-secret.json
+        cp results.jsonl results-secret.jsonl
 
     - name: Upload secret scan artifact
       if: ${{ inputs.upload_results == 'true' }}
       uses: actions/upload-artifact@v4
       with:
         name: secret-scan-results
-        path: results-secret.json
+        path: results-secret.jsonl
         if-no-files-found: error
         retention-days: 30
       
