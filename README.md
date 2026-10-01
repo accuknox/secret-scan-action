@@ -76,6 +76,8 @@ jobs:
           results: ""                                 # Types of results: verified, unknown, unverified, filtered_unverified
           exclude_paths: "tests/,docs/"               # Paths to exclude
           additional_arguments: ""                    # Extra arguments for the scanner
+          native: false                               # true = local binary (SARIF, DS). false = container scan
+          scanner_version: "v0.15.1"                  # optional aspm-scanner-cli release tag
           base_command: ""                            # Override default Docker command
           upload_results: true                        # Upload results to GitHub artifact
           accuknox_token: ${{ secrets.ACCUKNOX_TOKEN }}
@@ -92,6 +94,8 @@ jobs:
 | `results`              | Result types to include: `verified`, `unknown`, `unverified`, `filtered_unverified` | Optional | All types included |
 | `exclude_paths`        | Comma-separated list of paths to exclude from scanning        | Optional         | "" |
 | `additional_arguments` | Extra arguments to pass to the secret scanning tool           | Optional         | "" |
+| `native`               | `true` installs and runs the local secret scanner binary (no container). SARIF is uploaded as data type `DS` (secret scan findings). `false` uses the container scanner. | Optional         | false |
+| `scanner_version`      | aspm-scanner-cli GitHub release tag                           | Optional         | v0.15.1 |
 | `base_command`         | Override the default command (Docker/local CLI)               | Optional         | Docker-based |
 | `accuknox_token`                | API token for AccuKnox SaaS                                    | Required         | — |
 | `accuknox_endpoint`             | AccuKnox API endpoint                                          | Optional         | cspm.demo.accuknox.com |

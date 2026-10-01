@@ -1,5 +1,5 @@
 name: "AccuKnox Secret Scan"
-description: "Run AccuKnox Secret Security scan on a repository"
+description: "Run AccuKnox secret scan. Set native to true to use the local binary (SARIF uploaded as data type DS, secret scan findings)."
 
 branding: 
   icon: "shield" 
@@ -31,6 +31,14 @@ inputs:
     description: "Extra arguments to pass to the secret scanning tool"
     required: false
     default: ""
+  native:
+    description: "Use the local secret scanner binary. true writes SARIF and uploads as data type DS (secret scan findings)."
+    required: false
+    default: "false"
+  scanner_version:
+    description: "aspm-scanner-cli GitHub release tag"
+    required: false
+    default: "v0.15.1"
   soft_fail:
     description: "Do not return an error code if there are failed checks"
     required: false
@@ -57,6 +65,8 @@ runs:
         BRANCH: ${{ inputs.branch }}
         EXCLUDE_PATHS: ${{ inputs.exclude_paths }}
         ADDITIONAL_ARGUMENTS: ${{ inputs.additional_arguments }}
+        NATIVE: ${{ inputs.native }}
+        SCANNER_VERSION: ${{ inputs.scanner_version }}
         SOFT_FAIL: ${{ inputs.soft_fail }}
         BASE_COMMAND: ${{ inputs.base_command }}
         UPLOAD_RESULTS: ${{ inputs.upload_results }}
@@ -68,12 +78,49 @@ runs:
           exit 1
         fi
 
-        echo "Downloading AccuKnox ASPM Scanner..."
-        curl -L https://github.com/accuknox/aspm-scanner-cli/releases/download/v0.14.2/accuknox-aspm-scanner -o accuknox-aspm-scanner
+        NATIVE="${NATIVE//[$'\t\r\n ']}"
+        NATIVE="$(printf '%s' "$NATIVE" | tr '[:upper:]' '[:lower:]')"
+        if [ -z "$NATIVE" ]; then
+          NATIVE="false"
+        fi
+        if [ "$NATIVE" != "true" ] && [ "$NATIVE" != "false" ]; then
+          echo "ERROR: native must be 'true' or 'false' (got '$NATIVE')"
+          exit 1
+        fi
+        if [ "$NATIVE" = "true" ]; then
+          ENGINE="gitleaks"
+        else
+          ENGINE="trufflehog"
+        fi
+
+        SCANNER_VERSION="${SCANNER_VERSION//[$'\t\r\n ']}"
+        if [ -z "$SCANNER_VERSION" ]; then
+          SCANNER_VERSION="v0.15.1"
+        fi
+
+        echo "Downloading AccuKnox ASPM Scanner ${SCANNER_VERSION}..."
+        curl -fL "https://github.com/accuknox/aspm-scanner-cli/releases/download/${SCANNER_VERSION}/accuknox-aspm-scanner" -o accuknox-aspm-scanner
         chmod +x accuknox-aspm-scanner
 
-        touch ./results.jsonl
-        chmod 666 ./results.jsonl
+        ENGINE_ARG=""
+        CONTAINER_MODE_ARG="--container-mode"
+        RESULT_SRC="results.jsonl"
+        RESULT_DST="results-secret.jsonl"
+        BASE_CMD="git file://."
+        if [ "$ENGINE" = "gitleaks" ]; then
+          # Local binary, no Docker. SARIF is uploaded as data_type=DS (secret scan findings).
+          echo "Installing local secret scanner binary..."
+          ./accuknox-aspm-scanner tool install --type gitleaks
+          ENGINE_ARG="--engine gitleaks"
+          CONTAINER_MODE_ARG=""
+          RESULT_SRC="results.json"
+          RESULT_DST="results-secret.json"
+          BASE_CMD="detect --source . --report-format sarif --report-path results.json --no-banner"
+          echo "SARIF results will be uploaded as data_type=DS (secret scan findings)."
+        fi
+
+        touch "./$RESULT_SRC"
+        chmod 666 "./$RESULT_SRC"
 
         # Soft fail argument
         SOFT_FAIL="${SOFT_FAIL//[$'\t\r\n ']}"
@@ -83,30 +130,33 @@ runs:
         fi
 
         # Build base command
-        BASE_CMD="git file://."
         if [ -n "$BASE_COMMAND" ]; then
           BASE_CMD="$BASE_COMMAND"
         fi
 
-        # Add optional CLI arguments
+        # TruffleHog-only flags; gitleaks uses --command / additional_arguments
         ARGS=""
-        [ -n "$RESULTS" ] && ARGS="$ARGS --results $RESULTS"
-        [ -n "$BRANCH" ] && ARGS="$ARGS --branch $BRANCH"
-        [ -n "$EXCLUDE_PATHS" ] && ARGS="$ARGS --exclude-paths $EXCLUDE_PATHS"
+        if [ "$ENGINE" = "trufflehog" ]; then
+          [ -n "$RESULTS" ] && ARGS="$ARGS --results $RESULTS"
+          [ -n "$BRANCH" ] && ARGS="$ARGS --branch $BRANCH"
+          [ -n "$EXCLUDE_PATHS" ] && ARGS="$ARGS --exclude-paths $EXCLUDE_PATHS"
+        fi
         [ -n "$ADDITIONAL_ARGUMENTS" ] && ARGS="$ARGS $ADDITIONAL_ARGUMENTS"
 
         echo "Running AccuKnox secret scan..."
-        echo "./accuknox-aspm-scanner scan --keep-results $SOFT_FAIL_ARG secret --command \"$BASE_CMD $ARGS\" --container-mode"
-        ./accuknox-aspm-scanner scan --keep-results $SOFT_FAIL_ARG secret --command "$BASE_CMD $ARGS" --container-mode
+        echo "./accuknox-aspm-scanner scan --keep-results $SOFT_FAIL_ARG secret --command \"$BASE_CMD $ARGS\" $ENGINE_ARG $CONTAINER_MODE_ARG"
+        ./accuknox-aspm-scanner scan --keep-results $SOFT_FAIL_ARG secret --command "$BASE_CMD $ARGS" $ENGINE_ARG $CONTAINER_MODE_ARG
 
-        cp results.jsonl results-secret.jsonl
+        cp "$RESULT_SRC" "$RESULT_DST"
 
     - name: Upload secret scan artifact
       if: ${{ inputs.upload_results == 'true' }}
       uses: actions/upload-artifact@v4
       with:
         name: secret-scan-results
-        path: results-secret.jsonl
+        path: |
+          results-secret.jsonl
+          results-secret.json
         if-no-files-found: error
         retention-days: 30
       
