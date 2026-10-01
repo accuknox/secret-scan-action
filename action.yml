@@ -1,5 +1,5 @@
 name: "AccuKnox Secret Scan"
-description: "Run AccuKnox secret scan with TruffleHog. Set gitleaks to true to scan with Gitleaks SARIF (data type DS, secret scan findings)."
+description: "Run AccuKnox secret scan. Set native to true to use the local binary (SARIF uploaded as data type DS, secret scan findings)."
 
 branding: 
   icon: "shield" 
@@ -31,10 +31,14 @@ inputs:
     description: "Extra arguments to pass to the secret scanning tool"
     required: false
     default: ""
-  gitleaks:
-    description: "Use the local Gitleaks binary instead of TruffleHog. true writes SARIF and uploads as data type DS (secret scan findings)."
+  native:
+    description: "Use the local secret scanner binary. true writes SARIF and uploads as data type DS (secret scan findings)."
     required: false
     default: "false"
+  scanner_version:
+    description: "aspm-scanner-cli GitHub release tag"
+    required: false
+    default: "v0.15.1"
   soft_fail:
     description: "Do not return an error code if there are failed checks"
     required: false
@@ -61,7 +65,8 @@ runs:
         BRANCH: ${{ inputs.branch }}
         EXCLUDE_PATHS: ${{ inputs.exclude_paths }}
         ADDITIONAL_ARGUMENTS: ${{ inputs.additional_arguments }}
-        GITLEAKS: ${{ inputs.gitleaks }}
+        NATIVE: ${{ inputs.native }}
+        SCANNER_VERSION: ${{ inputs.scanner_version }}
         SOFT_FAIL: ${{ inputs.soft_fail }}
         BASE_COMMAND: ${{ inputs.base_command }}
         UPLOAD_RESULTS: ${{ inputs.upload_results }}
@@ -73,23 +78,28 @@ runs:
           exit 1
         fi
 
-        GITLEAKS="${GITLEAKS//[$'\t\r\n ']}"
-        GITLEAKS="$(printf '%s' "$GITLEAKS" | tr '[:upper:]' '[:lower:]')"
-        if [ -z "$GITLEAKS" ]; then
-          GITLEAKS="false"
+        NATIVE="${NATIVE//[$'\t\r\n ']}"
+        NATIVE="$(printf '%s' "$NATIVE" | tr '[:upper:]' '[:lower:]')"
+        if [ -z "$NATIVE" ]; then
+          NATIVE="false"
         fi
-        if [ "$GITLEAKS" != "true" ] && [ "$GITLEAKS" != "false" ]; then
-          echo "ERROR: gitleaks must be 'true' or 'false' (got '$GITLEAKS')"
+        if [ "$NATIVE" != "true" ] && [ "$NATIVE" != "false" ]; then
+          echo "ERROR: native must be 'true' or 'false' (got '$NATIVE')"
           exit 1
         fi
-        if [ "$GITLEAKS" = "true" ]; then
+        if [ "$NATIVE" = "true" ]; then
           ENGINE="gitleaks"
         else
           ENGINE="trufflehog"
         fi
 
-        echo "Downloading AccuKnox ASPM Scanner..."
-        curl -L https://github.com/accuknox/aspm-scanner-cli/releases/download/v0.15.1/accuknox-aspm-scanner -o accuknox-aspm-scanner
+        SCANNER_VERSION="${SCANNER_VERSION//[$'\t\r\n ']}"
+        if [ -z "$SCANNER_VERSION" ]; then
+          SCANNER_VERSION="v0.15.1"
+        fi
+
+        echo "Downloading AccuKnox ASPM Scanner ${SCANNER_VERSION}..."
+        curl -fL "https://github.com/accuknox/aspm-scanner-cli/releases/download/${SCANNER_VERSION}/accuknox-aspm-scanner" -o accuknox-aspm-scanner
         chmod +x accuknox-aspm-scanner
 
         ENGINE_ARG=""
@@ -99,14 +109,14 @@ runs:
         BASE_CMD="git file://."
         if [ "$ENGINE" = "gitleaks" ]; then
           # Local binary, no Docker. SARIF is uploaded as data_type=DS (secret scan findings).
-          echo "Installing local Gitleaks binary..."
+          echo "Installing local secret scanner binary..."
           ./accuknox-aspm-scanner tool install --type gitleaks
           ENGINE_ARG="--engine gitleaks"
           CONTAINER_MODE_ARG=""
           RESULT_SRC="results.json"
           RESULT_DST="results-secret.json"
           BASE_CMD="detect --source . --report-format sarif --report-path results.json --no-banner"
-          echo "Gitleaks SARIF will be uploaded as data_type=DS (secret scan findings)."
+          echo "SARIF results will be uploaded as data_type=DS (secret scan findings)."
         fi
 
         touch "./$RESULT_SRC"
@@ -133,7 +143,7 @@ runs:
         fi
         [ -n "$ADDITIONAL_ARGUMENTS" ] && ARGS="$ARGS $ADDITIONAL_ARGUMENTS"
 
-        echo "Running AccuKnox secret scan ($ENGINE)..."
+        echo "Running AccuKnox secret scan..."
         echo "./accuknox-aspm-scanner scan --keep-results $SOFT_FAIL_ARG secret --command \"$BASE_CMD $ARGS\" $ENGINE_ARG $CONTAINER_MODE_ARG"
         ./accuknox-aspm-scanner scan --keep-results $SOFT_FAIL_ARG secret --command "$BASE_CMD $ARGS" $ENGINE_ARG $CONTAINER_MODE_ARG
 
